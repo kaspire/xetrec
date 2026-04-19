@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XETREC Playbook</title>
+<style>
+  :root {
+    --bg: #0d0f12;
+    --bg2: #13161b;
+    --bg3: #1a1e25;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555b6e;
+    --green: #1db87a;
+    --green-bg: rgba(29,184,122,0.12);
+    --red: #e2504a;
+    --red-bg: rgba(226,80,74,0.12);
+    --amber: #e8a020;
+    --amber-bg: rgba(232,160,32,0.1);
+    --blue: #4a8fe8;
+    --blue-bg: rgba(74,143,232,0.1);
+    --accent: #4a8fe8;
+    --font: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+
+  header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: var(--font); font-size: 18px; letter-spacing: 0.15em; color: var(--text); }
+  .logo span { color: var(--accent); }
+  .header-actions { display: flex; gap: 10px; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg2); padding: 0 24px; }
+  .tab { padding: 12px 20px; cursor: pointer; color: var(--text2); font-size: 13px; border-bottom: 2px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text); }
+
+  .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .hidden { display: none !important; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); }
+  .field input, .field select, .field textarea {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 9px 12px; font-size: 13px; font-family: var(--sans);
+    outline: none; transition: border 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--border2); }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .field select option { background: var(--bg3); }
+
+  .check-group { display: flex; flex-wrap: wrap; gap: 10px; }
+  .check-item { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+  .check-item input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .check-item span { font-size: 13px; color: var(--text2); }
+  .check-item:has(input:checked) span { color: var(--text); }
+
+  .radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .radio-pill { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
+  .radio-pill input[type=radio] { display: none; }
+  .radio-pill span { font-size: 12px; color: var(--text2); }
+  .radio-pill:has(input:checked) { border-color: var(--accent); background: var(--blue-bg); }
+  .radio-pill:has(input:checked) span { color: var(--text); }
+
+  .result-pills { display: flex; gap: 8px; }
+  .result-pill { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); transition: all 0.15s; }
+  .result-pill input[type=radio] { display: none; }
+  .result-pill span { font-size: 12px; font-weight: 500; }
+  .result-pill.win:has(input:checked) { border-color: var(--green); background: var(--green-bg); }
+  .result-pill.win:has(input:checked) span { color: var(--green); }
+  .result-pill.loss:has(input:checked) { border-color: var(--red); background: var(--red-bg); }
+  .result-pill.loss:has(input:checked) span { color: var(--red); }
+  .result-pill.be:has(input:checked) { border-color: var(--amber); background: var(--amber-bg); }
+  .result-pill.be:has(input:checked) span { color: var(--amber); }
+  .result-pill.open:has(input:checked) { border-color: var(--blue); background: var(--blue-bg); }
+  .result-pill.open:has(input:checked) span { color: var(--blue); }
+
+  .section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .section-title:first-child { margin-top: 0; }
+
+  .btn { padding: 9px 20px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-family: var(--sans); transition: all 0.15s; letter-spacing: 0.03em; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #5a9ff0; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(226,80,74,0.3); font-size: 12px; padding: 5px 12px; }
+  .btn-danger:hover { background: var(--red-bg); }
+  .form-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+  /* JOURNAL TABLE */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .toolbar input, .toolbar select { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 7px 12px; font-size: 13px; font-family: var(--sans); outline: none; }
+  .toolbar select { min-width: 120px; }
+  .toolbar input { min-width: 200px; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--bg2); padding: 10px 14px; text-align: left; font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); font-weight: 500; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .cell-primary { color: var(--text); font-weight: 500; }
+  .cell-link { color: var(--accent); text-decoration: none; font-size: 12px; }
+  .cell-link:hover { text-decoration: underline; }
+  .cell-comment { font-size: 12px; color: var(--text3); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
+  .badge-sell { background: var(--red-bg); color: var(--red); }
+  .badge-buy { background: var(--green-bg); color: var(--green); }
+  .badge-win { background: var(--green-bg); color: var(--green); }
+  .badge-loss { background: var(--red-bg); color: var(--red); }
+  .badge-be { background: var(--amber-bg); color: var(--amber); }
+  .badge-open { background: var(--blue-bg); color: var(--blue); }
+  .badge-a { background: rgba(226,80,74,0.15); color: #e2504a; border: 1px solid rgba(226,80,74,0.25); }
+  .badge-v { background: rgba(29,184,122,0.15); color: #1db87a; border: 1px solid rgba(29,184,122,0.25); }
+  .badge-none { background: var(--bg3); color: var(--text3); }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .dot-yes { background: var(--green); }
+  .dot-no { background: var(--text3); }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty p { font-size: 13px; margin-top: 8px; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stat-label { font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 600; color: var(--text); font-family: var(--font); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .chart-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .chart-box h3 { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+  .chart-container { position: relative; height: 200px; }
+
+  .breakdown-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .breakdown-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .breakdown-box h3 { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+  .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-label { font-size: 12px; color: var(--text2); }
+  .breakdown-val { font-size: 12px; font-family: var(--font); color: var(--text); }
+  .breakdown-bar { height: 3px; background: var(--accent); border-radius: 2px; margin-top: 4px; }
+
+  @media (max-width: 700px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .chart-row { grid-template-columns: 1fr; }
+    .breakdown-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">X<span>E</span>TREC <span style="font-size:11px;color:var(--text3);margin-left:8px;letter-spacing:0.05em;">PLAYBOOK</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="exportData()">Export JSON</button>
+    <label class="btn btn-ghost" style="cursor:pointer;">Import JSON<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('journal')">Journal</div>
+  <div class="tab" onclick="switchTab('add')">+ Add Trade</div>
+  <div class="tab" onclick="switchTab('stats')">Stats</div>
+</div>
+
+<div class="content">
+
+  <!-- JOURNAL TAB -->
+  <div id="tab-journal">
+    <div class="toolbar">
+      <input type="text" placeholder="Search asset, comment..." id="search-input" oninput="renderJournal()">
+      <select id="filter-asset" onchange="renderJournal()"><option value="">All assets</option><option>DAX</option><option>Gold</option><option>NAS100</option><option>GBPUSD</option><option>EURUSD</option><option>BTC</option></select>
+      <select id="filter-dir" onchange="renderJournal()"><option value="">Buy & Sell</option><option>Buy</option><option>Sell</option></select>
+      <select id="filter-result" onchange="renderJournal()"><option value="">All results</option><option>Win</option><option>Loss</option><option>BE</option><option>Open</option></select>
+      <select id="filter-session" onchange="renderJournal()"><option value="">All sessions</option><option>London</option><option>New York</option></select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date / Time</th>
+            <th>Asset</th>
+            <th>Session</th>
+            <th>Dir</th>
+            <th>AV Arc</th>
+            <th>Badges</th>
+            <th>M5+M10</th>
+            <th>Confluence</th>
+            <th>Entry</th>
+            <th>Stop</th>
+            <th>Target</th>
+            <th>Result</th>
+            <th>R</th>
+            <th>Chart</th>
+            <th>Comment</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="journal-body"></tbody>
+      </table>
+    </div>
+    <div id="journal-empty" class="empty hidden">
+      <div style="font-size:32px;opacity:0.3;">◈</div>
+      <p>No trades yet. Add your first trade to start building the library.</p>
+    </div>
+  </div>
+
+  <!-- ADD TRADE TAB -->
+  <div id="tab-add" class="hidden">
+    <div id="edit-banner" class="hidden" style="background:var(--amber-bg);border:1px solid rgba(232,160,32,0.3);border-radius:6px;padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--amber);">Editing trade — changes will overwrite the original entry.</div>
+
+    <p class="section-title">Trade details</p>
+    <div class="form-grid">
+      <div class="field"><label>Asset</label>
+        <select id="f-asset">
+          <option value="">Select asset</option>
+          <option>DAX</option><option>Gold</option><option>NAS100</option><option>GBPUSD</option><option>EURUSD</option><option>BTC</option>
+        </select>
+      </div>
+      <div class="field"><label>Date & Time</label><input type="datetime-local" id="f-datetime"></div>
+      <div class="field"><label>Session</label>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="session" value="London"><span>London</span></label>
+          <label class="radio-pill"><input type="radio" name="session" value="New York"><span>New York</span></label>
+        </div>
+      </div>
+      <div class="field"><label>Direction</label>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="direction" value="Buy"><span>▲ Buy</span></label>
+          <label class="radio-pill"><input type="radio" name="direction" value="Sell"><span>▼ Sell</span></label>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-title">XETREC signal</p>
+    <div class="form-grid">
+      <div class="field"><label>AV Arc present?</label>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="arc" value="A Arc"><span>A Arc (bearish top)</span></label>
+          <label class="radio-pill"><input type="radio" name="arc" value="V Arc"><span>V Arc (bullish bottom)</span></label>
+          <label class="radio-pill"><input type="radio" name="arc" value="None"><span>None</span></label>
+        </div>
+      </div>
+      <div class="field"><label>Badge count</label>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="badges" value="1"><span>1 Badge</span></label>
+          <label class="radio-pill"><input type="radio" name="badges" value="2"><span>2 Badges (HH/LL)</span></label>
+        </div>
+      </div>
+      <div class="field"><label>M5 + M10 CET aligned</label>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="aligned" value="Yes"><span>Yes — both agree</span></label>
+          <label class="radio-pill"><input type="radio" name="aligned" value="No"><span>No — M10 only</span></label>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-title">Confluence (optional — log what was present)</p>
+    <div class="field">
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" id="c-abc"><span>ABC / 50% wave</span></label>
+        <label class="check-item"><input type="checkbox" id="c-qm"><span>Quasimodo</span></label>
+        <label class="check-item"><input type="checkbox" id="c-eql"><span>EQL / EQH + big break</span></label>
+      </div>
+    </div>
+
+    <p class="section-title">Levels & result</p>
+    <div class="form-grid">
+      <div class="field"><label>Entry price</label><input type="number" id="f-entry" step="any" placeholder="0.00"></div>
+      <div class="field"><label>Stop loss</label><input type="number" id="f-stop" step="any" placeholder="0.00"></div>
+      <div class="field"><label>Target (1:1)</label><input type="number" id="f-target" step="any" placeholder="0.00"></div>
+      <div class="field"><label>Result (pts / pips)</label><input type="number" id="f-pts" step="any" placeholder="+ or −"></div>
+    </div>
+    <div class="form-grid" style="margin-top:16px;">
+      <div class="field"><label>Outcome</label>
+        <div class="result-pills">
+          <label class="result-pill win"><input type="radio" name="result" value="Win"><span>Win</span></label>
+          <label class="result-pill loss"><input type="radio" name="result" value="Loss"><span>Loss</span></label>
+          <label class="result-pill be"><input type="radio" name="result" value="BE"><span>BE</span></label>
+          <label class="result-pill open"><input type="radio" name="result" value="Open"><span>Open</span></label>
+        </div>
+      </div>
+      <div class="field"><label>R multiple</label><input type="number" id="f-r" step="0.1" placeholder="e.g. 1.5"></div>
+    </div>
+
+    <p class="section-title">Evidence & notes</p>
+    <div class="form-grid full">
+      <div class="field"><label>TradingView chart URL</label><input type="url" id="f-url" placeholder="https://www.tradingview.com/chart/..."></div>
+      <div class="field"><label>Comment — why this trade, what you observed, any special context</label>
+        <textarea id="f-comment" placeholder="e.g. Took 1 badge only — V arc was very clean and price bounced hard off daily low. ABC also forming. Strong conviction despite single badge."></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveTrade()">Save trade</button>
+      <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div id="tab-stats" class="hidden">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="chart-row">
+      <div class="chart-box"><h3>Win / Loss / BE by asset</h3><div class="chart-container"><canvas id="chart-asset" role="img" aria-label="Results by asset"></canvas></div></div>
+      <div class="chart-box"><h3>Trades by day of week</h3><div class="chart-container"><canvas id="chart-dow" role="img" aria-label="Trades by day of week"></canvas></div></div>
+    </div>
+    <div class="breakdown-grid" id="breakdown-grid"></div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let trades = JSON.parse(localStorage.getItem('xetrec_trades') || '[]');
+let editingId = null;
+let assetChart = null;
+let dowChart = null;
+
+function save() { localStorage.setItem('xetrec_trades', JSON.stringify(trades)); }
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function switchTab(tab) {
+  ['journal','add','stats'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+    document.querySelectorAll('.tab')[['journal','add','stats'].indexOf(t)].classList.toggle('active', t === tab);
+  });
+  if (tab === 'journal') renderJournal();
+  if (tab === 'stats') renderStats();
+  if (tab === 'add' && editingId === null) { clearForm(); document.getElementById('edit-banner').classList.add('hidden'); }
+}
+
+function getRadio(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+
+function getChecks() {
+  const tags = [];
+  if (document.getElementById('c-abc').checked) tags.push('ABC');
+  if (document.getElementById('c-qm').checked) tags.push('QM');
+  if (document.getElementById('c-eql').checked) tags.push('EQL/EQH');
+  return tags;
+}
+
+function saveTrade() {
+  const asset = document.getElementById('f-asset').value;
+  const datetime = document.getElementById('f-datetime').value;
+  if (!asset || !datetime) { alert('Asset and date/time are required.'); return; }
+  const trade = {
+    id: editingId || uid(),
+    asset, datetime,
+    session: getRadio('session'),
+    direction: getRadio('direction'),
+    arc: getRadio('arc'),
+    badges: getRadio('badges'),
+    aligned: getRadio('aligned'),
+    confluence: getChecks(),
+    entry: document.getElementById('f-entry').value,
+    stop: document.getElementById('f-stop').value,
+    target: document.getElementById('f-target').value,
+    pts: document.getElementById('f-pts').value,
+    result: getRadio('result'),
+    r: document.getElementById('f-r').value,
+    url: document.getElementById('f-url').value,
+    comment: document.getElementById('f-comment').value,
+  };
+  if (editingId) {
+    const idx = trades.findIndex(t => t.id === editingId);
+    if (idx > -1) trades[idx] = trade;
+    editingId = null;
+  } else {
+    trades.unshift(trade);
+  }
+  save();
+  clearForm();
+  switchTab('journal');
+}
+
+function clearForm() {
+  editingId = null;
+  document.getElementById('edit-banner').classList.add('hidden');
+  ['f-asset','f-datetime','f-entry','f-stop','f-target','f-pts','f-r','f-url','f-comment'].forEach(id => document.getElementById(id).value = '');
+  ['session','direction','arc','badges','aligned','result'].forEach(n => {
+    document.querySelectorAll(`input[name="${n}"]`).forEach(r => r.checked = false);
+  });
+  ['c-abc','c-qm','c-eql'].forEach(id => document.getElementById(id).checked = false);
+}
+
+function editTrade(id) {
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('f-asset').value = t.asset;
+  document.getElementById('f-datetime').value = t.datetime;
+  document.getElementById('f-entry').value = t.entry;
+  document.getElementById('f-stop').value = t.stop;
+  document.getElementById('f-target').value = t.target;
+  document.getElementById('f-pts').value = t.pts;
+  document.getElementById('f-r').value = t.r;
+  document.getElementById('f-url').value = t.url;
+  document.getElementById('f-comment').value = t.comment;
+  ['session','direction','arc','badges','aligned','result'].forEach(n => {
+    document.querySelectorAll(`input[name="${n}"]`).forEach(r => r.checked = r.value === t[n]);
+  });
+  document.getElementById('c-abc').checked = t.confluence.includes('ABC');
+  document.getElementById('c-qm').checked = t.confluence.includes('QM');
+  document.getElementById('c-eql').checked = t.confluence.includes('EQL/EQH');
+  document.getElementById('edit-banner').classList.remove('hidden');
+  switchTab('add');
+}
+
+function deleteTrade(id) {
+  if (!confirm('Delete this trade entry?')) return;
+  trades = trades.filter(t => t.id !== id);
+  save();
+  renderJournal();
+}
+
+function getFiltered() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const asset = document.getElementById('filter-asset').value;
+  const dir = document.getElementById('filter-dir').value;
+  const result = document.getElementById('filter-result').value;
+  const session = document.getElementById('filter-session').value;
+  return trades.filter(t =>
+    (!search || t.asset.toLowerCase().includes(search) || t.comment.toLowerCase().includes(search)) &&
+    (!asset || t.asset === asset) &&
+    (!dir || t.direction === dir) &&
+    (!result || t.result === result) &&
+    (!session || t.session === session)
+  );
+}
+
+function renderJournal() {
+  const filtered = getFiltered();
+  const tbody = document.getElementById('journal-body');
+  const empty = document.getElementById('journal-empty');
+  if (filtered.length === 0) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  tbody.innerHTML = filtered.map(t => {
+    const dt = t.datetime ? new Date(t.datetime) : null;
+    const dateStr = dt ? dt.toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) : '—';
+    const timeStr = dt ? dt.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'}) : '';
+    const arcBadge = t.arc === 'A Arc' ? '<span class="badge badge-a">A</span>' : t.arc === 'V Arc' ? '<span class="badge badge-v">V</span>' : '<span style="color:var(--text3);font-size:11px;">—</span>';
+    const dirBadge = t.direction === 'Buy' ? '<span class="badge badge-buy">▲ Buy</span>' : t.direction === 'Sell' ? '<span class="badge badge-sell">▼ Sell</span>' : '—';
+    const resBadge = t.result ? `<span class="badge badge-${t.result.toLowerCase()}">${t.result}</span>` : '—';
+    const aligned = t.aligned === 'Yes' ? '<span class="dot dot-yes"></span>Yes' : t.aligned === 'No' ? '<span class="dot dot-no"></span>No' : '—';
+    const tags = (t.confluence || []).map(c => `<span class="tag">${c}</span>`).join('');
+    const chartLink = t.url ? `<a href="${t.url}" class="cell-link" target="_blank">↗ chart</a>` : '—';
+    const r = t.r ? `<span style="color:${t.result==='Win'?'var(--green)':t.result==='Loss'?'var(--red)':'var(--text2)'};font-family:var(--font)">${parseFloat(t.r).toFixed(1)}R</span>` : '—';
+    return `<tr>
+      <td class="cell-primary">${dateStr}<br><span style="font-size:11px;color:var(--text3)">${timeStr}</span></td>
+      <td class="cell-primary">${t.asset || '—'}</td>
+      <td><span style="font-size:11px;color:var(--text2)">${t.session || '—'}</span></td>
+      <td>${dirBadge}</td>
+      <td>${arcBadge}</td>
+      <td style="font-family:var(--font);font-size:12px">${t.badges ? t.badges.charAt(0) : '—'}</td>
+      <td>${aligned}</td>
+      <td><div class="tags">${tags || '<span style="color:var(--text3);font-size:11px">none</span>'}</div></td>
+      <td style="font-family:var(--font);font-size:12px">${t.entry || '—'}</td>
+      <td style="font-family:var(--font);font-size:12px">${t.stop || '—'}</td>
+      <td style="font-family:var(--font);font-size:12px">${t.target || '—'}</td>
+      <td>${resBadge}</td>
+      <td>${r}</td>
+      <td>${chartLink}</td>
+      <td class="cell-comment" title="${t.comment || ''}">${t.comment || '—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;margin-right:4px" onclick="editTrade('${t.id}')">Edit</button>
+        <button class="btn btn-danger" onclick="deleteTrade('${t.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStats() {
+  const t = trades;
+  const total = t.length;
+  const wins = t.filter(x => x.result === 'Win').length;
+  const losses = t.filter(x => x.result === 'Loss').length;
+  const wr = total > 0 ? Math.round(wins / (wins + losses) * 100) : 0;
+  const rVals = t.filter(x => x.r && x.result !== 'Open').map(x => parseFloat(x.r));
+  const avgR = rVals.length ? (rVals.reduce((a,b)=>a+b,0)/rVals.length).toFixed(2) : '—';
+  const aligned = t.filter(x => x.aligned === 'Yes');
+  const alignedWR = aligned.length ? Math.round(aligned.filter(x=>x.result==='Win').length / aligned.filter(x=>x.result==='Win'||x.result==='Loss').length * 100) : '—';
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total trades</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-value ${wr>=50?'green':'red'}">${wr}%</div><div class="stat-sub">${wins}W / ${losses}L</div></div>
+    <div class="stat-card"><div class="stat-label">Avg R</div><div class="stat-value">${avgR}</div></div>
+    <div class="stat-card"><div class="stat-label">M5+M10 aligned WR</div><div class="stat-value ${alignedWR>=50?'green':'red'}">${alignedWR}${alignedWR!=='—'?'%':''}</div><div class="stat-sub">${aligned.length} aligned trades</div></div>
+    <div class="stat-card"><div class="stat-label">2-badge trades</div><div class="stat-value">${t.filter(x=>x.badges==='2').length}</div><div class="stat-sub">vs ${t.filter(x=>x.badges==='1').length} single badge</div></div>
+    <div class="stat-card"><div class="stat-label">AV Arc trades</div><div class="stat-value">${t.filter(x=>x.arc&&x.arc!=='None').length}</div><div class="stat-sub">of ${total} total</div></div>
+  `;
+
+  renderAssetChart();
+  renderDowChart();
+  renderBreakdowns();
+}
+
+function renderAssetChart() {
+  const assets = ['DAX','Gold','NAS100','GBPUSD','EURUSD','BTC'];
+  const wins = assets.map(a => trades.filter(t=>t.asset===a&&t.result==='Win').length);
+  const losses = assets.map(a => trades.filter(t=>t.asset===a&&t.result==='Loss').length);
+  const bes = assets.map(a => trades.filter(t=>t.asset===a&&t.result==='BE').length);
+  if (assetChart) assetChart.destroy();
+  assetChart = new Chart(document.getElementById('chart-asset'), {
+    type: 'bar',
+    data: {
+      labels: assets,
+      datasets: [
+        { label: 'Win', data: wins, backgroundColor: 'rgba(29,184,122,0.7)' },
+        { label: 'Loss', data: losses, backgroundColor: 'rgba(226,80,74,0.7)' },
+        { label: 'BE', data: bes, backgroundColor: 'rgba(232,160,32,0.7)' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b90a0', font: { size: 11 } } },
+        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b90a0', font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderDowChart() {
+  const days = ['Mon','Tue','Wed','Thu','Fri'];
+  const counts = [1,2,3,4,5].map(d => trades.filter(t => {
+    if (!t.datetime) return false;
+    const day = new Date(t.datetime).getDay();
+    return day === (d % 7);
+  }).length);
+  const wrs = [1,2,3,4,5].map(d => {
+    const dayTrades = trades.filter(t => t.datetime && new Date(t.datetime).getDay() === (d%7));
+    const w = dayTrades.filter(t=>t.result==='Win').length;
+    const l = dayTrades.filter(t=>t.result==='Loss').length;
+    return w+l > 0 ? Math.round(w/(w+l)*100) : 0;
+  });
+  if (dowChart) dowChart.destroy();
+  dowChart = new Chart(document.getElementById('chart-dow'), {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [
+        { label: 'Trades', data: counts, backgroundColor: 'rgba(74,143,232,0.6)', yAxisID: 'y' },
+        { label: 'WR%', data: wrs, type: 'line', borderColor: '#1db87a', backgroundColor: 'transparent', pointBackgroundColor: '#1db87a', yAxisID: 'y2', tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b90a0', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b90a0', font: { size: 11 } } },
+        y2: { position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { color: '#1db87a', font: { size: 11 }, callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+function renderBreakdowns() {
+  const badgeTypes = ['1','2'];
+  const arcTypes = ['A Arc','V Arc','None'];
+  const confluences = ['ABC','QM','EQL/EQH'];
+
+  function wr(subset) {
+    const w = subset.filter(t=>t.result==='Win').length;
+    const l = subset.filter(t=>t.result==='Loss').length;
+    return w+l > 0 ? Math.round(w/(w+l)*100) : null;
+  }
+  function pct(val, max) { return max > 0 ? Math.round(val/max*100) : 0; }
+
+  const maxCount = Math.max(...badgeTypes.map(b => trades.filter(t=>t.badges===b).length), 1);
+
+  document.getElementById('breakdown-grid').innerHTML = `
+    <div class="breakdown-box">
+      <h3>Badge count performance</h3>
+      ${badgeTypes.map(b => {
+        const sub = trades.filter(t=>t.badges===b);
+        const w = wr(sub);
+        const bar = pct(sub.length, maxCount);
+        return `<div class="breakdown-row">
+          <div><div class="breakdown-label">${b} badge${b==='2'?'s (HH/LL)':''}</div><div class="breakdown-bar" style="width:${bar}%;background:var(--accent)"></div></div>
+          <div class="breakdown-val">${w !== null ? w+'%' : '—'} <span style="color:var(--text3);font-size:11px">(${sub.length})</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="breakdown-box">
+      <h3>AV Arc win rate</h3>
+      ${arcTypes.map(a => {
+        const sub = trades.filter(t=>t.arc===a);
+        const w = wr(sub);
+        return `<div class="breakdown-row">
+          <div class="breakdown-label">${a}</div>
+          <div class="breakdown-val">${w !== null ? w+'%' : '—'} <span style="color:var(--text3);font-size:11px">(${sub.length})</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="breakdown-box">
+      <h3>Confluence impact</h3>
+      ${confluences.map(c => {
+        const sub = trades.filter(t=>(t.confluence||[]).includes(c));
+        const without = trades.filter(t=>!(t.confluence||[]).includes(c));
+        const w = wr(sub);
+        const wo = wr(without);
+        return `<div class="breakdown-row">
+          <div><div class="breakdown-label">${c}</div><div style="font-size:10px;color:var(--text3)">without: ${wo!==null?wo+'%':'—'}</div></div>
+          <div class="breakdown-val">${w !== null ? w+'%' : '—'} <span style="color:var(--text3);font-size:11px">(${sub.length})</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="breakdown-box">
+      <h3>Session performance</h3>
+      ${['London','New York'].map(s => {
+        const sub = trades.filter(t=>t.session===s);
+        const w = wr(sub);
+        return `<div class="breakdown-row">
+          <div class="breakdown-label">${s}</div>
+          <div class="breakdown-val">${w !== null ? w+'%' : '—'} <span style="color:var(--text3);font-size:11px">(${sub.length})</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="breakdown-box">
+      <h3>Best trading hours (CET)</h3>
+      ${getBestHours()}
+    </div>
+    <div class="breakdown-box">
+      <h3>Direction split</h3>
+      ${['Buy','Sell'].map(d => {
+        const sub = trades.filter(t=>t.direction===d);
+        const w = wr(sub);
+        return `<div class="breakdown-row">
+          <div class="breakdown-label">${d}</div>
+          <div class="breakdown-val">${w !== null ? w+'%' : '—'} <span style="color:var(--text3);font-size:11px">(${sub.length})</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function getBestHours() {
+  const hourBuckets = {};
+  trades.forEach(t => {
+    if (!t.datetime) return;
+    const h = new Date(t.datetime).getHours();
+    const bucket = `${h}:00–${h+1}:00`;
+    if (!hourBuckets[bucket]) hourBuckets[bucket] = [];
+    hourBuckets[bucket].push(t);
+  });
+  const sorted = Object.entries(hourBuckets).sort((a,b) => b[1].length - a[1].length).slice(0,4);
+  if (!sorted.length) return '<div class="breakdown-row"><div class="breakdown-label" style="color:var(--text3)">No data yet</div></div>';
+  return sorted.map(([h, sub]) => {
+    const w = sub.filter(t=>t.result==='Win').length;
+    const l = sub.filter(t=>t.result==='Loss').length;
+    const pctW = w+l > 0 ? Math.round(w/(w+l)*100) : null;
+    return `<div class="breakdown-row">
+      <div class="breakdown-label">${h}</div>
+      <div class="breakdown-val">${pctW!==null?pctW+'%':'—'} <span style="color:var(--text3);font-size:11px">(${sub.length})</span></div>
+    </div>`;
+  }).join('');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(trades, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'xetrec_trades.json';
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      if (!confirm(`Import ${imported.length} trades? This will merge with existing entries.`)) return;
+      const existingIds = new Set(trades.map(t => t.id));
+      imported.forEach(t => { if (!existingIds.has(t.id)) trades.unshift(t); });
+      save();
+      renderJournal();
+      alert(`Import done. ${trades.length} total trades.`);
+    } catch { alert('Invalid JSON file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+renderJournal();
+</script>
+</body>
+</html>
